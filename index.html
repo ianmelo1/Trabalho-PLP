@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BetCopa 2026 — Sistema de Apostas</title>
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <span class="logo">⚽ BetCopa 2026</span>
+
+    <nav>
+      <button class="nav-link" data-pagina="home"    onclick="navegar('home')">Início</button>
+      <button class="nav-link" data-pagina="grupos"  onclick="navegar('grupos')">Grupos</button>
+      <button class="nav-link" data-pagina="apostas" onclick="navegar('apostas')">Apostas</button>
+      <button class="nav-link" data-pagina="minhas"  onclick="navegar('minhas')">Minhas Apostas</button>
+      <button class="nav-link" data-pagina="ranking" onclick="navegar('ranking')">Ranking</button>
+      <button class="nav-link" data-pagina="admin"   onclick="navegar('admin')" title="Painel do administrador">⚙️ Admin</button>
+    </nav>
+
+    <div class="area-auth">
+      <!-- Não logado -->
+      <div id="area-login">
+        <button class="btn btn-outline" onclick="abrirModal('modal-login')">Entrar</button>
+        <button class="btn btn-primary" onclick="abrirModal('modal-registro')">Cadastrar</button>
+      </div>
+      <!-- Logado -->
+      <div id="area-usuario" class="hidden" style="display:flex;align-items:center;gap:.75rem;">
+        <span class="saldo-chip">💰 <span id="saldo-valor">R$ 0,00</span></span>
+        <span class="nome-usuario" id="nome-usuario"></span>
+        <button class="btn btn-danger" onclick="fazerLogout()">Sair</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════════════════ -->
+<div id="banner-api" class="banner-api hidden"></div>
+<main>
+
+  <!-- ── HOME ──────────────────────────────────────────────── -->
+  <section id="pag-home" class="pagina">
+    <div class="hero">
+      <h1>Copa do Mundo 2026 🏆</h1>
+      <p>EUA · Canadá · México &nbsp;|&nbsp; Aposte nos jogos e concorra ao ranking!</p>
+    </div>
+
+    <div class="stats-globais">
+      <div class="stat-global"><div class="num" id="stat-jogos">0</div><div class="label">Jogos Finalizados</div></div>
+      <div class="stat-global"><div class="num" id="stat-apostas">0</div><div class="label">Apostas Realizadas</div></div>
+      <div class="stat-global"><div class="num" id="stat-apostado">R$ 0</div><div class="label">Total Apostado</div></div>
+    </div>
+
+    <div class="secao" id="secao-ao-vivo">
+      <h2 class="secao-titulo">🔴 Ao Vivo Agora</h2>
+      <div class="grid-jogos" id="jogos-ao-vivo"></div>
+    </div>
+
+    <div class="secao">
+      <h2 class="secao-titulo" id="titulo-proximos">📅 Próximos Jogos</h2>
+      <div class="grid-jogos" id="proximos-jogos"></div>
+    </div>
+  </section>
+
+  <!-- ── GRUPOS ─────────────────────────────────────────────── -->
+  <section id="pag-grupos" class="pagina hidden">
+    <h2 class="secao-titulo" style="font-size:1.5rem;margin-bottom:1.5rem">Fase de Grupos</h2>
+    <div class="tabs-grupos" id="tabs-grupos"></div>
+    <div class="secao">
+      <h3 class="secao-titulo">Classificação</h3>
+      <div id="tabela-grupo"></div>
+    </div>
+    <div class="secao">
+      <h3 class="secao-titulo">Jogos</h3>
+      <div class="grid-jogos" id="jogos-grupo"></div>
+    </div>
+  </section>
+
+  <!-- ── APOSTAS ────────────────────────────────────────────── -->
+  <section id="pag-apostas" class="pagina hidden">
+    <h2 class="secao-titulo" style="font-size:1.5rem;margin-bottom:1.5rem">Faça sua Aposta</h2>
+    <div id="lista-apostas"></div>
+  </section>
+
+  <!-- ── MINHAS APOSTAS ─────────────────────────────────────── -->
+  <section id="pag-minhas" class="pagina hidden">
+    <h2 class="secao-titulo" style="font-size:1.5rem;margin-bottom:1.5rem">Minhas Apostas</h2>
+    <div id="minhas-apostas-content"></div>
+  </section>
+
+  <!-- ── RANKING ────────────────────────────────────────────── -->
+  <section id="pag-ranking" class="pagina hidden">
+    <h2 class="secao-titulo" style="font-size:1.5rem;margin-bottom:1.5rem">🏅 Ranking de Apostadores</h2>
+    <div id="ranking-content"></div>
+  </section>
+
+  <!-- ── ADMIN ─────────────────────────────────────────────── -->
+  <section id="pag-admin" class="pagina hidden">
+    <h2 class="secao-titulo" style="font-size:1.5rem;margin-bottom:1.5rem">⚙️ Painel Admin — Inserir Resultados</h2>
+    <p style="color:var(--texto-muted);margin-bottom:1.5rem;font-size:.9rem">
+      Defina o resultado dos jogos. As apostas pendentes serão resolvidas automaticamente.
+    </p>
+    <div id="admin-jogos"></div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAIS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Modal Login -->
+<div id="modal-login" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-login')">✕</button>
+    <h2>Entrar na conta</h2>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter') fazerLogin()">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••" onkeydown="if(event.key==='Enter') fazerLogin()">
+    </div>
+    <p style="font-size:.8rem;color:var(--texto-muted);margin-bottom:1rem">
+      💡 Conta demo: <strong>demo@copa2026.com</strong> / <strong>123456</strong>
+    </p>
+    <div class="form-footer">
+      <button class="link-btn" onclick="fecharModal('modal-login');abrirModal('modal-registro')">Criar conta</button>
+      <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registro -->
+<div id="modal-registro" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-registro')">✕</button>
+    <h2>Criar conta</h2>
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="reg-nome" placeholder="Seu nome">
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="reg-email" placeholder="seu@email.com">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="reg-senha" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter') fazerRegistro()">
+    </div>
+    <p style="font-size:.8rem;color:var(--texto-muted);margin-bottom:1rem">
+      🎁 Você receberá <strong>R$ 1.000,00</strong> de saldo inicial para apostar!
+    </p>
+    <div class="form-footer">
+      <button class="link-btn" onclick="fecharModal('modal-registro');abrirModal('modal-login')">Já tenho conta</button>
+      <button class="btn btn-primary" onclick="fazerRegistro()">Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Fazer Aposta -->
+<div id="modal-aposta" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-aposta')">✕</button>
+    <h2>Confirmar Aposta</h2>
+
+    <div class="aposta-preview">
+      <div class="preview-item">
+        <div class="label">Jogo</div>
+        <div class="valor" id="aposta-desc">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="label">Sua escolha</div>
+        <div class="valor" id="aposta-escolha">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="label">Odd</div>
+        <div class="valor" id="aposta-odd">—</div>
+      </div>
+      <div class="preview-item">
+        <div class="label">Saldo disponível</div>
+        <div class="valor" id="aposta-saldo-disp">—</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Valor da aposta (R$)</label>
+      <input type="number" id="aposta-valor" placeholder="Ex: 50.00" min="1" step="0.01"
+        oninput="calcularPreview()" onkeydown="if(event.key==='Enter') confirmarAposta()">
+    </div>
+
+    <div style="background:var(--bg-card2);border-radius:10px;padding:1rem;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--texto-muted);font-size:.9rem">Retorno potencial:</span>
+      <span id="aposta-retorno" style="font-size:1.3rem;font-weight:700;color:var(--verde-neon)">R$ 0,00</span>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;padding:.75rem" onclick="confirmarAposta()">
+      ✅ Confirmar Aposta
+    </button>
+  </div>
+</div>
+
+<!-- Toast de feedback -->
+<div id="toast" class="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS — ordem importa!
+══════════════════════════════════════════════════════════ -->
+<script src="src/js/models.js"></script>
+<script src="src/js/functional.js"></script>
+<script src="src/js/dados.js"></script>
+<script src="src/js/api.js"></script>
+<script src="src/js/app.js"></script>
+
+</body>
+</html>
