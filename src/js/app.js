@@ -450,25 +450,41 @@ const renderAdmin = () => {
         <span class="badge-status-${j.status}">${j.status.toUpperCase()}</span>
       </div>
       <div class="admin-form">
-        <select id="res-${j.id}">
-          <option value="">Resultado...</option>
-          <option value="time1">${j.time1} vence</option>
-          <option value="empate">Empate</option>
-          <option value="time2">${j.time2} vence</option>
-        </select>
-        <input type="number" id="p1-${j.id}" placeholder="${j.time1} gols" min="0" max="20">
-        <input type="number" id="p2-${j.id}" placeholder="${j.time2} gols" min="0" max="20">
-        <button class="btn-admin" onclick="salvarResultado(${j.id})">Salvar</button>
+        <div class="placar-input">
+          <label>${j.time1}</label>
+          <input type="number" id="p1-${j.id}" value="0" min="0" max="30"
+            oninput="previewVencedor(${j.id})">
+        </div>
+        <span class="placar-x">×</span>
+        <div class="placar-input">
+          <label>${j.time2}</label>
+          <input type="number" id="p2-${j.id}" value="0" min="0" max="30"
+            oninput="previewVencedor(${j.id})">
+        </div>
+        <span class="preview-vencedor" id="prev-${j.id}">Empate</span>
+        <button class="btn-admin" onclick="salvarResultado(${j.id})">Salvar resultado</button>
       </div>
     </div>`).join('') || '<p class="sem-dados">Todos os jogos já foram finalizados.</p>';
 };
 
+// Mostra quem vence conforme o placar é digitado (derivado, não selecionado)
+const previewVencedor = id => {
+  const jogo = sistema.getJogoPorId(id);
+  const p1 = parseInt($(`p1-${id}`).value);
+  const p2 = parseInt($(`p2-${id}`).value);
+  const el = $(`prev-${id}`);
+  if (isNaN(p1) || isNaN(p2)) { el.textContent = '—'; el.className = 'preview-vencedor'; return; }
+  if (p1 > p2)      { el.textContent = `🏆 ${jogo.time1}`; el.className = 'preview-vencedor venceu'; }
+  else if (p2 > p1) { el.textContent = `🏆 ${jogo.time2}`; el.className = 'preview-vencedor venceu'; }
+  else              { el.textContent = '🤝 Empate';        el.className = 'preview-vencedor empate'; }
+};
+
 const salvarResultado = id => {
-  const res = $(`res-${id}`).value;
-  const p1  = parseInt($(`p1-${id}`).value);
-  const p2  = parseInt($(`p2-${id}`).value);
-  if (!res) { toast('Selecione o resultado', 'erro'); return; }
-  if (isNaN(p1) || isNaN(p2)) { toast('Informe o placar', 'erro'); return; }
+  const p1 = parseInt($(`p1-${id}`).value);
+  const p2 = parseInt($(`p2-${id}`).value);
+  if (isNaN(p1) || isNaN(p2) || p1 < 0 || p2 < 0) { toast('Informe um placar válido', 'erro'); return; }
+  // Resultado derivado automaticamente do placar
+  const res = p1 > p2 ? 'time1' : p2 > p1 ? 'time2' : 'empate';
   sistema.definirResultadoJogo(id, res, p1, p2);
   toast('Resultado salvo e apostas resolvidas! ✅');
   renderAdmin();
