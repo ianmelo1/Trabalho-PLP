@@ -162,6 +162,27 @@ const mapStatus = strStatus => {
   return 'ao_vivo'; // 1H, 2H, HT, ET, P, etc.
 };
 
+// Converte o timestamp UTC da API para data/hora de Brasília (America/Sao_Paulo)
+const paraHorarioBrasilia = ev => {
+  // strTimestamp vem em UTC, ex: "2026-06-11T19:00:00"
+  const ts = ev.strTimestamp
+    ? new Date(ev.strTimestamp.endsWith('Z') ? ev.strTimestamp : ev.strTimestamp + 'Z')
+    : new Date(`${ev.dateEvent}T${ev.strTime || '00:00:00'}Z`);
+
+  if (isNaN(ts)) return { data: ev.dateEvent, hora: (ev.strTime || '00:00').slice(0, 5) };
+
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(ts).reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+
+  return {
+    data: `${partes.year}-${partes.month}-${partes.day}`,
+    hora: `${partes.hour === '24' ? '00' : partes.hour}:${partes.minute}`,
+  };
+};
+
 // Determina resultado com base nos placares
 const mapResultado = (h, a) => {
   const ph = parseInt(h), pa = parseInt(a);
@@ -178,6 +199,7 @@ const apiEventoParaJogo = ev => {
   const status = mapStatus(ev.strStatus);
   const p1 = ev.intHomeScore !== null && ev.intHomeScore !== '' ? parseInt(ev.intHomeScore) : null;
   const p2 = ev.intAwayScore !== null && ev.intAwayScore !== '' ? parseInt(ev.intAwayScore) : null;
+  const { data, hora } = paraHorarioBrasilia(ev);
   return {
     id,
     time1: ev.strHomeTeam,
@@ -190,8 +212,8 @@ const apiEventoParaJogo = ev => {
     badgeUrl2: ev.strAwayTeamBadge || null,
     grupo,
     fase: grupo ? 'grupos' : mapFase(ev.intRound),
-    data: ev.dateEvent,
-    hora: (ev.strTime || '00:00').slice(0, 5),
+    data,
+    hora,
     odds: gerarOdds(ev.strHomeTeam, ev.strAwayTeam),
     status,
     resultado: status === 'finalizado' ? mapResultado(p1, p2) : null,

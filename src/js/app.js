@@ -167,16 +167,23 @@ const renderHome = () => {
     hide($('secao-ao-vivo'));
   }
 
-  // Próximos jogos (ou resultados recentes se não há agendados)
-  const tituloProximos = $('titulo-proximos');
+  // Resultados recentes (últimos jogos finalizados, do mais recente ao mais antigo)
+  const recentes = ordenarJogosPorData(filtrarJogosFinalizados(sistema.jogos))
+    .reverse()
+    .slice(0, 6);
+  if (recentes.length > 0) {
+    show($('secao-recentes'));
+    $('jogos-recentes').innerHTML = recentes.map(cardJogoHome).join('');
+  } else {
+    hide($('secao-recentes'));
+  }
+
+  // Próximos jogos
   if (proximosJogos.length > 0) {
-    if (tituloProximos) tituloProximos.textContent = '📅 Próximos Jogos';
     $('proximos-jogos').innerHTML = proximosJogos.map(cardJogoHome).join('');
   } else {
-    const recentes = ordenarJogosPorData(filtrarJogosFinalizados(sistema.jogos)).slice(-6).reverse();
-    if (tituloProximos) tituloProximos.textContent = '🏁 Resultados Recentes';
-    $('proximos-jogos').innerHTML = recentes.map(cardJogoHome).join('') ||
-      '<p class="sem-dados">Nenhum jogo disponível ainda.</p>';
+    $('proximos-jogos').innerHTML =
+      '<p class="sem-dados">Nenhum jogo agendado no momento.</p>';
   }
 
   // Estatísticas globais (programação funcional)
